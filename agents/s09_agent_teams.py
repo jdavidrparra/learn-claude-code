@@ -50,7 +50,7 @@ import threading
 import time
 from pathlib import Path
 
-from anthropic import Anthropic
+from anthropic import AnthropicBedrock
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -58,7 +58,20 @@ if os.getenv("ANTHROPIC_BASE_URL"):
     os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
 
 WORKDIR = Path.cwd()
-client = Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
+class _BedrockNoAuth(AnthropicBedrock):
+    def _prepare_request(self, request) -> None:
+        pass  # Skip SigV4 — Portkey handles AWS auth
+
+_pk_headers = {}
+if os.getenv("PORTKEY_API_KEY"):
+    _pk_headers["x-portkey-api-key"] = os.getenv("PORTKEY_API_KEY")
+if os.getenv("PORTKEY_PROVIDER"):
+    _pk_headers["x-portkey-provider"] = os.getenv("PORTKEY_PROVIDER")
+client = _BedrockNoAuth(
+    base_url=os.getenv("ANTHROPIC_BASE_URL"),
+    aws_access_key="dummy", aws_secret_key="dummy", aws_region="us-east-2",
+    default_headers=_pk_headers,
+)
 MODEL = os.environ["MODEL_ID"]
 TEAM_DIR = WORKDIR / ".team"
 INBOX_DIR = TEAM_DIR / "inbox"

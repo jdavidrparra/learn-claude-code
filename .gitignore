@@ -225,3 +225,10 @@ test_providers.py
 # Internal analysis artifacts (not learning material)
 analysis/
 analysis_progress.md
+
+# Claude Code local config and memory
+.claude/
+
+# Test outputs and scratch files
+test_output/
+hello.py
